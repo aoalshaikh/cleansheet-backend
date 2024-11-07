@@ -1,99 +1,408 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Football Academy ERP Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A Laravel 11 REST API backend for managing football academies. The system helps academies organize their work with features for team management, player development tracking, match management, and more.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Requirements
 
-## Description
+- PHP 8.2 or higher
+- MySQL 8.0 or higher
+- Composer 2.0 or higher
+- Node.js 18.0 or higher (for asset compilation)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## API Authentication
 
-## Project setup
+The API uses JWT (JSON Web Token) authentication. All API requests except login/register require a valid JWT token in the Authorization header:
 
-```bash
-$ npm install
+```
+Authorization: Bearer <your_jwt_token>
 ```
 
-## Compile and run the project
+### Authentication Flow
 
-```bash
-# development
-$ npm run start
+1. **Login** - Get JWT token:
+```http
+POST /api/v1/login
+Content-Type: application/json
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+{
+    "email": "user@example.com",
+    "password": "password"
+}
 ```
 
-## Run tests
+2. **Phone Login** - Alternative login with phone:
+```http
+POST /api/v1/login
+Content-Type: application/json
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+{
+    "phone": "+1234567890"
+}
 ```
 
-## Deployment
+3. **OTP Verification** - Required for phone login:
+```http
+POST /api/v1/verify-otp
+Content-Type: application/json
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g mau
-$ mau deploy
+{
+    "phone": "+1234567890",
+    "otp": "123456"
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+4. **Register New User**:
+```http
+POST /api/v1/register
+Content-Type: application/json
 
-## Resources
+{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "password": "password",
+    "password_confirmation": "password"
+}
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## API Endpoints
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Organizations
+
+```http
+# List organizations
+GET /api/v1/organizations
+
+# Create organization
+POST /api/v1/organizations
+{
+    "name": "Academy Name",
+    "description": "Academy description",
+    "settings": {
+        "timezone": "UTC",
+        "currency": "USD"
+    }
+}
+
+# Get organization details
+GET /api/v1/organizations/{id}
+
+# Update organization
+PUT /api/v1/organizations/{id}
+
+# Get organization statistics
+GET /api/v1/organizations/{id}/stats
+
+# List organization players
+GET /api/v1/organizations/{id}/players
+
+# List organization coaches
+GET /api/v1/organizations/{id}/coaches
+
+# Invite user to organization
+POST /api/v1/organizations/{id}/invite
+{
+    "email": "user@example.com",
+    "role": "coach"
+}
+```
+
+### Teams
+
+```http
+# List teams
+GET /api/v1/teams
+
+# Create team
+POST /api/v1/teams
+{
+    "name": "Team Name",
+    "description": "Team description",
+    "organization_id": 1,
+    "tier_id": 1
+}
+
+# Get team details
+GET /api/v1/teams/{id}
+
+# Update team
+PUT /api/v1/teams/{id}
+
+# Add player to team
+POST /api/v1/teams/{id}/players/{playerId}
+
+# Remove player from team
+DELETE /api/v1/teams/{id}/players/{playerId}
+
+# Get team statistics
+GET /api/v1/teams/{id}/stats
+
+# Get team schedule
+GET /api/v1/teams/{id}/schedule
+```
+
+### Players
+
+```http
+# Get player details
+GET /api/v1/players/{id}
+
+# Get player statistics
+GET /api/v1/players/{id}/stats
+
+# Get player skills
+GET /api/v1/players/{id}/skills
+
+# Update skill target
+PUT /api/v1/players/{id}/skills/{skillId}
+{
+    "target_value": 85
+}
+
+# Get attendance history
+GET /api/v1/players/{id}/attendance
+```
+
+### Matches
+
+```http
+# List matches
+GET /api/v1/matches
+
+# Create match
+POST /api/v1/matches
+{
+    "home_team_id": 1,
+    "away_team_id": 2,
+    "scheduled_at": "2024-03-20T15:00:00Z",
+    "venue": "Stadium Name"
+}
+
+# Get match details
+GET /api/v1/matches/{id}
+
+# Update match
+PUT /api/v1/matches/{id}
+
+# Record match event
+POST /api/v1/matches/{id}/events
+{
+    "type": "goal",
+    "player_id": 1,
+    "minute": 35,
+    "details": {}
+}
+
+# Get match lineup
+GET /api/v1/matches/{id}/lineup
+
+# Update match lineup
+PUT /api/v1/matches/{id}/lineup
+```
+
+### Evaluations
+
+```http
+# List evaluations
+GET /api/v1/evaluations
+
+# Create evaluation
+POST /api/v1/evaluations
+{
+    "player_id": 1,
+    "evaluator_id": 2,
+    "skills": {
+        "technical": 85,
+        "tactical": 75,
+        "physical": 80
+    },
+    "notes": "Player shows good progress"
+}
+
+# Get evaluation details
+GET /api/v1/evaluations/{id}
+
+# Update evaluation
+PUT /api/v1/evaluations/{id}
+
+# Delete evaluation
+DELETE /api/v1/evaluations/{id}
+```
+
+### Team Schedule
+
+```http
+# List team schedules
+GET /api/v1/team-schedules
+
+# Create schedule
+POST /api/v1/team-schedules
+{
+    "team_id": 1,
+    "type": "training",
+    "starts_at": "2024-03-20T15:00:00Z",
+    "ends_at": "2024-03-20T16:30:00Z",
+    "location": "Training Ground"
+}
+
+# Mark attendance
+POST /api/v1/team-schedules/{id}/attendance
+{
+    "player_id": 1,
+    "status": "present"
+}
+```
+
+### Notifications
+
+```http
+# List notifications
+GET /api/v1/notifications
+
+# Mark notifications as read
+POST /api/v1/notifications/mark-read
+{
+    "notification_ids": [1, 2, 3]
+}
+
+# Mark all as read
+POST /api/v1/notifications/mark-all-read
+
+# Clear notifications
+DELETE /api/v1/notifications/clear
+```
+
+### Subscriptions
+
+```http
+# List subscription plans
+GET /api/v1/subscriptions/plans
+
+# Subscribe to plan
+POST /api/v1/subscriptions/subscribe
+{
+    "plan_id": 1,
+    "payment_method": "card"
+}
+
+# Cancel subscription
+POST /api/v1/subscriptions/cancel
+
+# Get subscription status
+GET /api/v1/subscriptions/status
+```
+
+## Response Format
+
+All API responses follow a standard format:
+
+```json
+{
+    "success": true,
+    "data": {
+        // Response data here
+    },
+    "message": "Optional message",
+    "errors": {
+        // Validation errors if any
+    }
+}
+```
+
+### Error Responses
+
+```json
+{
+    "success": false,
+    "message": "Error message",
+    "errors": {
+        "field": ["Error description"]
+    }
+}
+```
+
+Common HTTP status codes:
+- 200: Success
+- 201: Created
+- 400: Bad Request
+- 401: Unauthorized
+- 403: Forbidden
+- 404: Not Found
+- 422: Validation Error
+- 500: Server Error
+
+## User Roles & Permissions
+
+The system implements role-based access control with the following roles:
+
+- **Superadmin**: Full system access
+- **Manager**: Organization-level administration
+- **Coach**: Team management and player evaluation
+- **Player**: Limited access to personal data
+- **Guardian**: Access to linked player's data
+
+Each role has specific permissions that determine what actions they can perform. The API will return a 403 Forbidden status for unauthorized actions.
+
+## Pagination
+
+List endpoints support pagination with the following query parameters:
+
+```
+/api/v1/teams?page=1&per_page=20
+```
+
+Response includes pagination metadata:
+
+```json
+{
+    "data": [...],
+    "meta": {
+        "current_page": 1,
+        "per_page": 20,
+        "total": 100,
+        "total_pages": 5
+    }
+}
+```
+
+## Filtering & Sorting
+
+Many list endpoints support filtering and sorting:
+
+```
+/api/v1/players?sort=name&order=asc&filter[team_id]=1
+```
+
+## Real-time Updates
+
+The system uses WebSocket connections for real-time updates. Connect to:
+
+```
+ws://your-domain/ws
+```
+
+Events you can listen for:
+- match.update
+- notification.new
+- schedule.change
+- evaluation.created
+
+## Rate Limiting
+
+API requests are rate-limited to:
+- 60 requests per minute for authenticated users
+- 30 requests per minute for unauthenticated requests
+
+## Development Notes
+
+- All dates are in UTC
+- API versioning is in the URL (v1)
+- Use appropriate HTTP methods (GET, POST, PUT, DELETE)
+- Include Accept: application/json header
+- Test environment available at: https://api-test.cleansheet.com
 
 ## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+For API support or questions, contact:
+- Email: api-support@cleansheet.com
+- Documentation: https://docs.cleansheet.com

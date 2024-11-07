@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  php:
+    build:
+      context: ../..
+      dockerfile: docker/prod/Dockerfile
+      target: php
+    container_name: cleansheet-php-prod
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 512M
+    networks:
+      - cleansheet-prod
+
+  nginx:
+    build:
+      context: ../..
+      dockerfile: docker/prod/Dockerfile
+      target: nginx
+    container_name: cleansheet-nginx-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - php
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    networks:
+      - cleansheet-prod
+
+  db:
+    image: postgres:13-alpine
+    container_name: cleansheet-db-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    networks:
+      - cleansheet-prod
+
+  redis:
+    image: redis:alpine
+    container_name: cleansheet-redis-prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    networks:
+      - cleansheet-prod
+
+networks:
+  cleansheet-prod:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
